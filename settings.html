@@ -1,0 +1,23 @@
+<div id="code_block_protect_container" class="extension_container">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Code Block Protection</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <p>
+                <small>Prevents macros (e.g. <code>{{user}}</code>, <code>{{getvar::}}</code>) from being resolved inside
+                    fenced code blocks (<code>```</code>) and inline code (<code>`</code>).</small>
+            </p>
+            <label class="checkbox_label">
+                <input id="cbp_enabled" type="checkbox" />
+                <span>Enable code block protection</span>
+            </label>
+            <div id="cbp_legacy_warning" class="justifyLeft" style="display:none; margin-top: 6px;">
+                <small class="fa-solid fa-triangle-exclamation" style="color: orange;"></small>
+                <small>Experimental Macro Engine is off. Protection only covers the legacy engine partially. Enable it in
+                    <b>User Settings &gt; Account &gt; Experimental Macro Engine</b> for full protection.</small>
+            </div>
+        </div>
+    </div>
+</div>

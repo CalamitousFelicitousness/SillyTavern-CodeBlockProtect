@@ -1,7 +1,6 @@
-import { saveSettingsDebounced } from '../../../../script.js';
+import { eventSource, event_types, saveSettingsDebounced } from '../../../../script.js';
 import { extension_settings, renderExtensionTemplateAsync } from '../../../extensions.js';
 import { power_user } from '../../../power-user.js';
-import { MacroEngine } from '../../../macros/engine/MacroEngine.js';
 
 const MODULE_NAME = 'code-block-protect';
 const EXTENSION_FOLDER = 'SillyTavern-CodeBlockProtect';
@@ -67,6 +66,29 @@ function restoreCodeBlocks(input) {
     return input;
 }
 
+// ---- MacroEngine registration ----
+
+async function registerMacroEngineHooks() {
+    // Dynamically import to ensure the module is fully initialized
+    const { MacroEngine } = await import('../../../macros/engine/MacroEngine.js');
+
+    if (!MacroEngine) {
+        console.warn(`[${MODULE_NAME}] MacroEngine not available. Code block protection will not work.`);
+        return false;
+    }
+
+    MacroEngine.addPreProcessor(extractCodeBlocks, {
+        priority: 1,
+        source: MODULE_NAME,
+    });
+    MacroEngine.addPostProcessor(restoreCodeBlocks, {
+        priority: 999,
+        source: MODULE_NAME,
+    });
+
+    return true;
+}
+
 // ---- Settings UI ----
 
 function loadSettings() {
@@ -85,15 +107,8 @@ function loadSettings() {
 jQuery(async () => {
     loadSettings();
 
-    // Register MacroEngine pre/post processors (always - they only fire when new engine is active)
-    MacroEngine.instance.addPreProcessor(extractCodeBlocks, {
-        priority: 1,
-        source: MODULE_NAME,
-    });
-    MacroEngine.instance.addPostProcessor(restoreCodeBlocks, {
-        priority: 999,
-        source: MODULE_NAME,
-    });
+    // Register MacroEngine hooks - use dynamic import to avoid timing issues
+    const registered = await registerMacroEngineHooks();
 
     // Render settings UI
     const settingsHtml = await renderExtensionTemplateAsync(`third-party/${EXTENSION_FOLDER}`, 'settings');
@@ -107,10 +122,10 @@ jQuery(async () => {
         saveSettingsDebounced();
     });
 
-    // Show warning if experimental engine is off
-    if (power_user?.experimental_macro_engine === false) {
+    // Show warning if experimental engine is off or MacroEngine unavailable
+    if (!registered || power_user?.experimental_macro_engine === false) {
         $('#cbp_legacy_warning').show();
     }
 
-    console.log(`[${MODULE_NAME}] Loaded. Enabled: ${extension_settings[MODULE_NAME].enabled}`);
+    console.log(`[${MODULE_NAME}] Loaded. Enabled: ${extension_settings[MODULE_NAME].enabled}, MacroEngine: ${registered}`);
 });
